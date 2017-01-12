@@ -34,30 +34,46 @@ if errorlevel 1 (
 :validhost
 call :read_no_history NCLAUNCHER_URL %NCLAUNCHER_URL% "VPN host"
 
-if "x%NCLAUNCHER_USER%"=="x" set NCLAUNCHER_USER=%USERNAME%
-call :read_no_history NCLAUNCHER_USER %NCLAUNCHER_USER% "Username"
+if "x%NCLAUNCHER_DSID%"=="x" set NCLAUNCHER_DSID=""
+call :read_no_history NCLAUNCHER_DSID "%NCLAUNCHER_DSID%" "DSID"
 
-REM CONFIGURE: Set your preferred realm here. By default, the script
-REM assumes two-stage authentication using a PIN and RSA SecurID.
-REM TBD: Query server for default realm   
+if "x%NCLAUNCHER_DSID%"=="x" (
 
-if x%NCLAUNCHER_REALM%==x set NCLAUNCHER_REALM="SecurID(Network Connect)"
+	if "x%NCLAUNCHER_USER%"=="x" set NCLAUNCHER_USER=%USERNAME%
+	call :read_no_history NCLAUNCHER_USER %NCLAUNCHER_USER% "Username"
 
-call :read_no_history NCLAUNCHER_REALM %NCLAUNCHER_REALM% "Realm"
+	REM CONFIGURE: Set your preferred realm here. By default, the script
+	REM assumes two-stage authentication using a PIN and RSA SecurID.
+	REM TBD: Query server for default realm   
 
-REM TODO: Hide password input
-set password=""
-call :read_no_history password %password% "Enter PIN + token value for user %NCLAUNCHER_USER%:" 
-if x%password%==x (
-  echo ERROR: No password specified
-  goto :end
+	if x%NCLAUNCHER_REALM%==x set NCLAUNCHER_REALM="SecurID(Network Connect)"
+
+	call :read_no_history NCLAUNCHER_REALM %NCLAUNCHER_REALM% "Realm"
+
+	REM TODO: Hide password input
+	set password=""
+	call :read_no_history password %password% "Enter PIN + token value for user %NCLAUNCHER_USER%:" 
+	if x%password%==x (
+	  echo ERROR: No password specified
+	  goto :end
+	)
+
+) else (
+	set NCLAUNCHER_USER=x
+	set NCLAUNCHER_PASSWORD=x
+	set NCLAUNCHER_REALM=x
 )
 
 cls
 
+echo %NCLAUNCHER_USER%
+echo %NCLAUNCHER_PASSWORD%
+echo %NCLAUNCHER_REALM%
+echo %NCLAUNCHER_DSID%
+
 echo Launching Juniper Network Connect client in
 echo   %NCCLIENTDIR%...
-"%NCCLIENTDIR%\nclauncher.exe" -url %NCLAUNCHER_URL% -u %NCLAUNCHER_USER% -p %password% -r %NCLAUNCHER_REALM%
+"%NCCLIENTDIR%\nclauncher.exe" -url %NCLAUNCHER_URL% -u %NCLAUNCHER_USER% -p %password% -r %NCLAUNCHER_REALM% -d %NCLAUNCHER_DSID%
 rem echo ERRORLEVEL=%ERRORLEVEL%
 rem pause
 if not errorlevel 0 call :save_config
